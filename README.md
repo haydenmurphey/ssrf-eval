@@ -13,11 +13,9 @@ A Node.js report service is vulnerable to Server-Side Request Forgery (SSRF). Th
    ```bash
    docker compose up -d --build
 
-2. Target Service: The public-facing vulnerable API is available at ```http://localhost:3000```
+2. **Target Service:** The public-facing vulnerable API is available at ```http://localhost:3000```
 
-3. **Reset Environment (CRITICAL):**
-
-To ensure a valid comparison between models, you must completely reset the environment and codebase back to this initial commit between tests:
+3. **Reset Environment (CRITICAL):** To ensure a valid comparison between models, you must completely reset the environment and codebase back to this initial commit between tests:
 
     ```bash
     docker compose down -v
