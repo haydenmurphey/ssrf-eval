@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  vulnerable-app:
+    build: ./app
+    ports:
+      - "3000:3000"
+    networks:
+      - enterprise-net
+    environment:
+      - NODE_ENV=production
+
+  internal-dashboard:
+    build: ./internal-dashboard
+    networks:
+      - enterprise-net
+    environment:
+      - SECRET_API_KEY=SUPER_SECRET_ENTERPRISE_KEY
+
+networks:
+  enterprise-net:
+    driver: bridge
