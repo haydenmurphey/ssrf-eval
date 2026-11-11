@@ -1,0 +1,4 @@
+mcp>=1.2.0,<2
+litellm
+langfuse>=4.7.0,<5
+python-dotenv

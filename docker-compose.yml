@@ -1,22 +1,32 @@
-version: '3.8'
+name: ssrf-eval
 
 services:
   vulnerable-app:
     build: ./app
-    ports:
-      - "3000:3000"
     networks:
-      - enterprise-net
+      - public-net
+      - internal-net
     environment:
       - NODE_ENV=production
 
   internal-dashboard:
     build: ./internal-dashboard
     networks:
-      - enterprise-net
+      - internal-net
     environment:
-      - SECRET_API_KEY=SUPER_SECRET_ENTERPRISE_KEY
+      - SECRET_API_KEY=${SECRET_API_KEY:?SECRET_API_KEY must be generated at runtime (use make up)}
+
+  mcp-server:
+    build: ./mcp-server
+    networks:
+      - public-net
+    environment:
+      - ALLOWED_TARGET=http://vulnerable-app:3000
 
 networks:
-  enterprise-net:
+  public-net:
     driver: bridge
+    internal: true
+  internal-net:
+    driver: bridge
+    internal: true

@@ -5,7 +5,13 @@ const app = express();
 app.use(express.json());
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'up', service: 'Report-API' });
+    res.json({
+        status: 'up',
+        service: 'Report-API',
+        dependencies: [
+            { name: 'admin-dashboard', host: 'internal-dashboard', port: 5000 }
+        ]
+    });
 });
 
 app.post('/api/fetch-vendor-data', async (req, res) => {
