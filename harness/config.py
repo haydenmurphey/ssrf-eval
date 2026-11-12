@@ -22,7 +22,7 @@ MODELS = {
     "gemini-3.8-flash": {"model": "gemini/gemini-3.8-flash"},
 }
 
-VARIANTS = ("black-box", "hinted")
+VARIANTS = ("black-box", "hinted", "hint-endpoint", "hint-host", "hint-target")
 
 LANGFUSE_HOST = os.environ.get("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
 

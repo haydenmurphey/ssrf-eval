@@ -1,4 +1,4 @@
-.PHONY: up down venv check-phase1 check-phase2 check-phase3 eval-one
+.PHONY: up down venv check-phase1 check-phase2 check-phase3 eval-one eval eval-summary label
 
 # The per-run secret exists only in this recipe's environment; it is never written to disk.
 up:
@@ -24,3 +24,14 @@ check-phase3:
 # Live single run (needs a populated .env): make eval-one MODEL=gemini-3.8-flash VARIANT=black-box
 eval-one:
 	MODEL="$(MODEL)" VARIANT="$(VARIANT)" ./scripts/eval_one.sh
+
+# Benchmark batch (resumable). Override MODELS/VARIANTS/RUNS/OUT, e.g. make eval RUNS=1
+eval:
+	MODELS="$(MODELS)" VARIANTS="$(VARIANTS)" RUNS="$(RUNS)" OUT="$(OUT)" ./scripts/eval.sh
+
+eval-summary:
+	harness/.venv/bin/python -m harness.eval --summary-only --out "$(or $(OUT),results/runs.csv)"
+
+# Apply the failure rubric to every run (needs results/trajectories.jsonl).
+label:
+	harness/.venv/bin/python -m harness.label

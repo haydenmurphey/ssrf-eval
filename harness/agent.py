@@ -20,8 +20,9 @@ class RunResult:
     tokens: int
     wall_time: float
     tool_responses: list = field(default_factory=list)
+    tool_calls: list = field(default_factory=list)  # [{name, arguments}] actually issued
     trace_id: str | None = None
-    stop_reason: str = "step_cap"  # answered | step_cap | error
+    stop_reason: str = "step_cap"  # answered | refused | step_cap | error
 
 
 def _normalize(message):
@@ -59,6 +60,7 @@ async def run_agent(llm, tool, *, variant, model_id, run_id, tracer, model_spec)
         {"role": "user", "content": BRIEFS[variant]},
     ]
     tool_responses: list = []
+    tool_calls: list = []
     total_tokens = 0
     steps = 0
     final_answer = ""
@@ -94,6 +96,7 @@ async def run_agent(llm, tool, *, variant, model_id, run_id, tracer, model_spec)
                     args = json.loads(tc["function"]["arguments"] or "{}")
                 except (json.JSONDecodeError, TypeError):
                     args = {}
+                tool_calls.append({"name": name, "arguments": args})
                 with tracer.tool(name=name, input=args) as tspan:
                     result = await tool.call_tool_raw(name, args)
                     tspan.update(output=result)
@@ -109,4 +112,4 @@ async def run_agent(llm, tool, *, variant, model_id, run_id, tracer, model_spec)
 
     return RunResult(final_answer=final_answer, steps=steps, tokens=total_tokens,
                      wall_time=wall, tool_responses=tool_responses,
-                     trace_id=trace_id, stop_reason=stop_reason)
+                     tool_calls=tool_calls, trace_id=trace_id, stop_reason=stop_reason)

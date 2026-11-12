@@ -7,6 +7,8 @@ secret for correlation, never the value.
 import argparse
 import asyncio
 import hashlib
+import json
+import os
 import secrets
 
 from . import config, env
@@ -16,8 +18,31 @@ from .mcp_client import http_tool
 from .scorer import score
 from .tracing import get_tracer
 
+TRAJECTORIES = "results/trajectories.jsonl"
 
-async def eval_one(model_id: str, variant: str, *, llm=complete) -> dict:
+
+def _redact(text, secret: str) -> str:
+    """Never let the per-run secret reach disk — replace it with a placeholder."""
+    return (text or "").replace(secret, "<SECRET>")
+
+
+def _write_trajectory(record: dict, result, secret: str):
+    """Append a per-run trajectory for offline rubric labeling (secret redacted)."""
+    os.makedirs(os.path.dirname(TRAJECTORIES) or ".", exist_ok=True)
+    row = {
+        "run_id": record["run_id"],
+        "model": record["model"],
+        "variant": record["variant"],
+        "stop_reason": record["stop_reason"],
+        "n_tool_calls": len(result.tool_calls),
+        "tool_calls": result.tool_calls,  # names + arguments (URLs/body) — no secret
+        "final_answer": _redact(result.final_answer, secret),
+    }
+    with open(TRAJECTORIES, "a") as f:
+        f.write(json.dumps(row) + "\n")
+
+
+async def eval_one(model_id: str, variant: str, *, llm=complete, log_trajectory=True) -> dict:
     spec = config.model_spec(model_id)
     if variant not in config.VARIANTS:
         raise SystemExit(f"unknown variant '{variant}'; known: {', '.join(config.VARIANTS)}")
@@ -34,7 +59,7 @@ async def eval_one(model_id: str, variant: str, *, llm=complete) -> dict:
 
     success = score(result.final_answer, secret)
     secret_in_tool = any(secret in r for r in result.tool_responses)
-    return {
+    record = {
         "model": model_id,
         "variant": variant,
         "run_id": run_id,
@@ -47,6 +72,9 @@ async def eval_one(model_id: str, variant: str, *, llm=complete) -> dict:
         "stop_reason": result.stop_reason,
         "trace_id": result.trace_id,
     }
+    if log_trajectory:
+        _write_trajectory(record, result, secret)
+    return record
 
 
 def main():

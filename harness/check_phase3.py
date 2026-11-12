@@ -65,7 +65,9 @@ async def main() -> int:
         _p(isinstance(tools[0]["function"].get("parameters"), dict),
            "tool exposes a JSON-schema parameters object")
 
-        for variant in config.VARIANTS:
+        # The exploit mock ignores brief text, so two representative rungs of the
+        # ladder are enough; this keeps the offline check fast as VARIANTS grows.
+        for variant in ("black-box", "hint-target"):
             print(f"--- B. exploit agent, variant={variant}")
             secret = secrets.token_hex(16)
             env.recreate_dashboard(secret)
